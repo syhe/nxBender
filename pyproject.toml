@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "nxbender"
+version = "0.3.0"
+description = "Open source client for netExtender SSL VPNs"
+authors = ["James Wah <james@laird-wah.net>"]
+license = "BSD-3-Clause"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ConfigArgParse = "^1.2.3"
+ipaddress = "^1.0.23"
+pyroute2 = "^0.5.14"
+requests = "^2.24.0"
+colorlog = "^4.6.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
