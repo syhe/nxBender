@@ -38,6 +38,7 @@ class PPPSession(object):
         self.pty = master
 
         try:
+            logging.debug('Starting pppd: pppd %s' % ' '.join(self.pppargs))
             self.pppd = subprocess.Popen(['pppd'] + self.pppargs,
                                          stdin = slave,
                                          stdout = slave,
