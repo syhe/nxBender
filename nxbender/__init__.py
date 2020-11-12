@@ -23,6 +23,7 @@ parser.add_argument('-m', '--max-line', type=int, default=1500, help='Maximum le
 parser.add_argument('--debug', action='store_true', help='Show debugging information')
 parser.add_argument('-q', '--quiet', action='store_true', help='Don\'t output basic info whilst running')
 parser.add_argument('--show-ppp-log', action='store_true', help='Print PPP log messages to stdout')
+parser.add_argument('--use-peerconfig', default=False, type=str, metavar='PEERCONFIG', help='Use peerconfig file at /etc/ppp/peers/PEERCONFIG. Defaults to passing options on the commandline instead.')
 
 
 def main():

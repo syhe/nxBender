@@ -33,6 +33,9 @@ class PPPSession(object):
                 'usepeerdns',
         ]
 
+        if self.options.use_peerconfig:
+            self.pppargs = ['call', self.options.use_peerconfig]
+
     def run(self):
         master, slave = pty.openpty()
         self.pty = master

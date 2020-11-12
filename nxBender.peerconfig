@@ -1,0 +1,24 @@
+# nxBender peer config
+debug
+dump
+logfd 2 # we extract the remote IP through this
+
+# test every 10 seconds if the connection is alive
+lcp-echo-interval 10
+# terminate after two successive errors
+lcp-echo-failure 2
+
+usepeerdns
+
+# copied from NetExtender
+ktune
+local
+noipdefault
+noccp
+noauth
+novj
+#Multi-link disabled in pppd
+#nomp
+nopcomp
+noaccomp
+ipparam netExtender
