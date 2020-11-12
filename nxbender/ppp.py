@@ -11,10 +11,11 @@ import select
 import socket
 
 class PPPSession(object):
-    def __init__(self, options, session_id, routecallback=None):
+    def __init__(self, options, session_id, routecallback=None, interfacecallback=None):
         self.options = options
         self.session_id = session_id
         self.routecallback = routecallback
+        self.interfacecallback = interfacecallback
 
         self.pppargs = [
                 'debug', 'debug',
@@ -30,8 +31,10 @@ class PPPSession(object):
                 'noccp',    # server is buggy
                 'noauth',
                 'nomp',
-                'usepeerdns',
         ]
+
+        if not self.options.resolved:
+            self.pppargs.append('usepeerdns')
 
         if self.options.use_peerconfig:
             self.pppargs = ['call', self.options.use_peerconfig]
@@ -132,4 +135,10 @@ class PPPSession(object):
 
             if line.startswith("remote IP address"):
                 remote_ip = line.split(' ')[-1]
-                self.routecallback(remote_ip)
+                if self.routecallback:
+                    self.routecallback(remote_ip)
+
+            if line.startswith("Using interface"):
+                interface = line.split(' ')[-1]
+                if self.interfacecallback:
+                    self.interfacecallback(interface)

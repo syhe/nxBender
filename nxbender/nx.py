@@ -5,6 +5,7 @@ from . import ppp
 import pyroute2
 import ipaddress
 import atexit
+import subprocess
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
@@ -28,6 +29,10 @@ class FingerprintAdapter(HTTPAdapter):
 class NXSession(object):
     def __init__(self, options):
         self.options = options
+        self.dns_suffixes = []
+        self.srv_options = {}
+        self.routes = []
+        self.interface = None
 
     def run(self):
         self.host = self.options.server + ':%d' % self.options.port
@@ -103,6 +108,7 @@ class NXSession(object):
 
         srv_options = {}
         routes = []
+        dns_suffixes = []
 
         # Very dodgily avoid actually parsing the HTML
         for line in resp.iter_lines():
@@ -119,6 +125,8 @@ class NXSession(object):
 
             if key == 'Route':
                 routes.append(value)
+            if key == 'dnsSuffixes':
+                dns_suffixes.append(value)
             elif key not in srv_options:
                 srv_options[key] = value
             else:
@@ -128,6 +136,7 @@ class NXSession(object):
 
         self.srv_options = srv_options
         self.routes = routes
+        self.dns_suffixes = dns_suffixes
 
     def tunnel(self):
         """
@@ -144,10 +153,15 @@ class NXSession(object):
             logging.warn("Unknown tunnel version '%s'" % tunnel_version)
             auth_key = self.srv_options['SessionId']    # a guess
 
-        pppd = ppp.PPPSession(self.options, auth_key, routecallback=self.setup_routes)
+        pppd = ppp.PPPSession(self.options, auth_key, routecallback=self.setup_routes_and_dns, interfacecallback=self.store_interface)
         pppd.run()
 
-    def setup_routes(self, gateway):
+    def store_interface(self, interface):
+        logging.debug('Interface is %s' % interface)
+        self.interface = interface
+
+    def setup_routes_and_dns(self, gateway):
+        logging.debug('Remote IP address is %s' % gateway)
         ip = pyroute2.IPRoute()
 
         for route in set(self.routes):
@@ -155,4 +169,15 @@ class NXSession(object):
             dst = '%s/%d' % (net.network_address, net.prefixlen)
             ip.route("add", dst=dst, gateway=gateway)
 
-        logging.info("Remote routing configured, VPN is up")
+        logging.info("Remote routing configured")
+
+        if self.options.resolved and self.interface:
+            dns = [self.srv_options['dns1']]
+            if 'dns2' in self.srv_options:
+                dns.append(self.srv_options['dns2'])
+            subprocess.check_call(['resolvectl', 'dns', self.interface] + dns)
+            if self.dns_suffixes:
+                subprocess.check_call(['resolvectl', 'domain', self.interface] + self.dns_suffixes)
+            logging.info("Configured DNS via resolved")
+
+        logging.info("VPN is up")
